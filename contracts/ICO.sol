@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 
 contract ICO {
@@ -15,9 +13,12 @@ contract ICO {
 	uint public raisedAmount;
 	uint public hardCap = 1 ether;
 	uint public minInvestment = 0.01 ether;
-	uint public maxInvestment = 0.1 ether;
+	uint public maxInvestment = 0.2 ether;
 	
 	constructor(address tokenAddress_ , uint startTime_, uint endTime_) {
+		require(startTime_ < endTime_, "Start time must be before end time");
+		require(startTime_ >= block.timestamp, "ICO: Start time cannot be in the past");
+		owner = msg.sender;
 		tokenAddress = tokenAddress_;	
 		startTime = startTime_;
 		endTime = endTime_;
@@ -42,7 +43,7 @@ contract ICO {
 	}
 
 	function buy() activeSale validAmount external payable {
-		uint amountOfTokens = msg.value / price;
+		uint amountOfTokens = (10**(IERC20Metadata(tokenAddress).decimals())) * (msg.value / price);
 		require(msg.value < hardCap, "ICO: amount exceeds hard cap");
 		IERC20(tokenAddress).transfer(msg.sender, amountOfTokens);
 		raisedAmount += msg.value;
@@ -50,6 +51,7 @@ contract ICO {
 
 	// Owner can withdraw deposited ether
 	function withdrawEther() external onlyOwner {
+		require(block.timestamp >= endTime, "ICO: cannot withdraw ether before end time");
         uint balance = address(this).balance;
         payable(msg.sender).transfer(balance);
     }

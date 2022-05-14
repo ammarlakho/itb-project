@@ -137,7 +137,6 @@ const config: HardhatUserConfig = {
     src: "./contracts",
   },
   networks: {
-
     goerli: createTestnetConfig("goerli"),
     mainnet: createTestnetConfig("mainnet"),
     kovan: createTestnetConfig("kovan"),
@@ -154,7 +153,7 @@ const config: HardhatUserConfig = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     // apiKey: "ZUQBXSVXNT8RWQDK7Z5NHV4395U5JJFB5M" // matic
-    apiKey: "RQ83XPC9R4JQ9GJFXMIGXFEHZIY1SG1E5V" //mainnet
+    apiKey: "6VR7YX125YRWT8TMH5F5UVRTJQUDTFC8IN" //mainnet
     // apiKey: "FFBBU5ZQ2KV1183XT3VRBKF68ZR56RWT5B" //bsc
   },
   paths: {

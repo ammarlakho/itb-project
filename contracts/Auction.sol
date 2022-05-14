@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import "hardhat/console.sol";
 
 contract Auction {
 	address public owner;
@@ -10,7 +9,7 @@ contract Auction {
 	uint public minPrice = 0.001 ether;
 	address private highestBidder;
 	address private secondHighestBidder;
-	mapping(address => uint) public bids;
+	mapping(address => uint) private bids;
 	
 	enum AuctionStatus { InActive, Active, Cancelled, Complete }
 	AuctionStatus public auctionStatus;
@@ -31,6 +30,7 @@ contract Auction {
 	}
 
 	function placeBid() external payable {
+		require(auctionStatus == AuctionStatus.Active, "Auction is not active");
 		require(msg.value >= minPrice, "Bid is too low");
 		bids[msg.sender] = msg.value;
 		if (highestBidder == address(0)) {
@@ -44,30 +44,9 @@ contract Auction {
 		}
 	}
 
-	function startAuction(uint endTime_) external onlyOwner {
-		require(endTime > block.timestamp, "End time is in the past");
-		require(auctionStatus == AuctionStatus.InActive, "Auction is already active");
-		auctionStatus = AuctionStatus.Active;
-		startTime = block.timestamp;
-		endTime = endTime_;
-	}
-
-	function endAuction() external onlyOwner {
-		require(auctionStatus == AuctionStatus.Active, "Auction is not active");
-		require(block.timestamp >= endTime, "Auction has not ended yet");
-		auctionStatus = AuctionStatus.Complete;
-		uint increment = (bids[highestBidder] - bids[secondHighestBidder])/2;
-		uint highestBindingBid = bids[secondHighestBidder] + increment;
-        payable(msg.sender).transfer(highestBindingBid);
-	}
-
-	function cancelAuction() external onlyOwner {
-		auctionStatus = AuctionStatus.Cancelled;
-	}
-
 	function withdrawBid() external {
-		require(auctionStatus == AuctionStatus.Complete, "Auction is not complete");
-		if (msg.sender == highestBidder) {
+		require(auctionStatus == AuctionStatus.Complete || auctionStatus == AuctionStatus.Cancelled, "Auction is not complete/cancelled yet.");
+		if (auctionStatus == AuctionStatus.Complete && msg.sender == highestBidder) {
 			uint increment = (bids[highestBidder] - bids[secondHighestBidder])/2;
 			uint highestBindingBid = bids[secondHighestBidder] + increment;
 			uint refundedAmount = bids[msg.sender] - highestBindingBid;
@@ -75,5 +54,30 @@ contract Auction {
 		} else {
 			payable(msg.sender).transfer(bids[msg.sender]);
 		}
+	}
+
+    function startAuction(uint endTime_) external onlyOwner {
+		require(auctionStatus == AuctionStatus.InActive, "Auction is already active");
+		require(endTime_ > block.timestamp, "End time is in the past");
+		auctionStatus = AuctionStatus.Active;
+		startTime = block.timestamp;
+		endTime = endTime_;
+	}
+
+
+	function endAuction() external onlyOwner {
+		require(auctionStatus == AuctionStatus.Active, "Auction is not active");
+		require(block.timestamp >= endTime, "End time not reached yet");
+		
+		// increment i've chosen is half of the difference between the highest and second highest bid
+		uint increment = (bids[highestBidder] - bids[secondHighestBidder])/2; 
+		uint highestBindingBid = bids[secondHighestBidder] + increment;
+        payable(msg.sender).transfer(highestBindingBid);
+		auctionStatus = AuctionStatus.Complete;
+	}
+
+	function cancelAuction() external onlyOwner {
+        require(auctionStatus == AuctionStatus.Active, "Auction is not active");
+		auctionStatus = AuctionStatus.Cancelled;
 	}
 }
