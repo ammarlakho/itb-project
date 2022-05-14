@@ -15,8 +15,8 @@ contract LakhoToken is IERC20Metadata {
 	constructor(string memory name_, string memory symbol_, uint256 totalSupply_, address icoAddress_) {
 		_name = name_;
 		_symbol = symbol_;
-		_mint(msg.sender, totalSupply_/2); // Mint half tokens to ICO contract
-		_mint(icoAddress_, totalSupply_/2); // Mint half tokens to token creator.
+		_mint(msg.sender, totalSupply_/2); // Mint half tokens to token creator
+		_mint(icoAddress_, totalSupply_/2); // Mint half tokens to ICO contract
 	}
 
 	function name() external override view returns (string memory) {
@@ -42,16 +42,15 @@ contract LakhoToken is IERC20Metadata {
 	function allowance(address owner, address spender) external override view returns (uint256) {
 		return _allowances[owner][spender];
 	}
+
+	function approve(address spender, uint256 amount) external override returns (bool) {
+		_allowances[msg.sender][spender] = amount;
+		emit Approval(msg.sender, spender, amount);
+		return true;
+	}
     
     function transfer(address recipient, uint256 amount) external override returns (bool) {
 		_transfer(msg.sender, recipient, amount);
-		return true;
-	}
-
-   
-    function approve(address spender, uint256 amount) external override returns (bool) {
-		_allowances[msg.sender][spender] = amount;
-		emit Approval(msg.sender, spender, amount);
 		return true;
 	}
 
